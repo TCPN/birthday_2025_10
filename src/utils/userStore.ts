@@ -26,7 +26,7 @@ export const useUserStore = defineStore("user", () => {
     const userData = await loginUser({ userId: loginData.userId, loginToken: loginData.loginToken });
     user.value = userData;
     saveLoginData(userData);
-
+    console.log('User logged in:', userData);
     return userData;
   };
 
@@ -34,6 +34,7 @@ export const useUserStore = defineStore("user", () => {
     const userData = await registerUser(registerData);
     user.value = userData;
     saveLoginData(userData);
+    console.log('User registered:', userData);
     return userData;
   };
 

@@ -2,20 +2,37 @@
 import { ref } from "vue";
 import { useUserStore } from "@/utils/userStore";
 
-const isRegisterView = ref(false);
+const isRegisterView = ref(true);
 const userId = ref('');
 const loginToken = ref('');
 const name = ref('');
+const duringQuery = ref(false);
 
 const userStore = useUserStore();
 
+function lockButtons(fn: () => void) {
+  return async () => {
+    if (duringQuery.value) return;
+    duringQuery.value = true;
+    try {
+      await fn();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      duringQuery.value = false;
+    }
+  };
+}
+
+const onClickLogin = lockButtons(() => userStore.login({ userId: userId.value, loginToken: loginToken.value }));
+const onClickRegister = lockButtons(() => userStore.register({ userId: userId.value, name: name.value }));
 </script>
 
 <template>
   <form>
     <div class="tab-bar">
-      <label :class="['tab', { active: !isRegisterView }]" @click="isRegisterView = false">登入</label>
       <label :class="['tab', { active: isRegisterView }]" @click="isRegisterView = true">註冊</label>
+      <label :class="['tab', { active: !isRegisterView }]" @click="isRegisterView = false">登入</label>
     </div>
     <label for="userid" class="input-entry">
       <span>帳號: </span>
@@ -30,8 +47,8 @@ const userStore = useUserStore();
       <input class="input" type="text" id="name" v-model="name" />
     </label>
     <div class="button-bar">
-      <button v-if="!isRegisterView" @click="userStore.login({ userId, loginToken })">登入</button>
-      <button v-if="isRegisterView" @click="userStore.register({ userId, name })">註冊</button>
+      <button v-if="!isRegisterView" type="button" :disabled="duringQuery" @click="onClickLogin">登入</button>
+      <button v-if="isRegisterView" type="button" :disabled="duringQuery" @click="onClickRegister">註冊</button>
     </div>
   </form>
 </template>
@@ -83,6 +100,13 @@ const userStore = useUserStore();
 
     &:hover {
       background-color: #555;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      background-color: #5557;
+      cursor: default;
+      // color: #7774;
     }
   }
 }

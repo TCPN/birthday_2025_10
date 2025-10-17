@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from "vue-router";
 import HelloWorld from "./components/HelloWorld.vue";
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useUserStore } from "./utils/userStore";
 import LoginView from "./views/LoginView.vue";
 
-const autoLoginFailed = ref(false);
 const userStore = useUserStore();
 
-onMounted(() => {
+const autoLoginFailed = ref(false);
+const loginSuccess = computed(() => !!userStore.user);
+
+onMounted(async () => {
   // Attempt auto-login
   
   try {
@@ -16,7 +18,7 @@ onMounted(() => {
     if (!saved) {
       autoLoginFailed.value = true;
     } else {
-      userStore.login(saved);
+      await userStore.login(saved);
     }
   } catch (e) {
     console.error("Auto login failed:", e);
@@ -39,16 +41,15 @@ onMounted(() => {
       height="125"
     />
 
-    <LoginView v-if="autoLoginFailed" />
-
+    <LoginView v-if="autoLoginFailed && !loginSuccess" />
     
     <div v-else class="wrapper">
-      <HelloWorld msg="You did it!" />
+      <HelloWorld :msg="loginSuccess ? `Hello, ${userStore.user?.name ?? '陌生人'}!` : '正在登入...'" />
 
-      <nav>
+      <!-- <nav> -->
         <!-- <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/about">About</RouterLink> -->
-      </nav>
+      <!-- </nav> -->
     </div>
   </header>
 

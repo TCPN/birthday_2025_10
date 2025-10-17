@@ -22,12 +22,10 @@ export async function fetchData<RetType, ParamType extends Record<string, string
 }
 
 export async function postData<RetType, DataType = unknown | null>(data: DataType): Promise<RetType> {
+  const hasData = !!data && Object.keys(data as object).length > 0;
   const response = await fetch(API_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(data ?? '')
+    body: hasData ? JSON.stringify(data) : undefined,
   });
   
   if (!response.ok) {
