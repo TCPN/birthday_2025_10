@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人生遊戲銀行</title>
+  </head>
+  <body>
+    <script>
+      const API_URL = 'https://script.google.com/macros/s/AKfycbxcOj_Nao45mzvuaep8ng-Ey45lszWKL4y73xuAyHK-_TvN0swfwsvq0ivelRR1Ycw87w/exec';
+
+      function onLoginClicked() {
+        console.log('Login clicked');
+        const form = document.getElementById('form');
+        const formData = new FormData(form);
+        const userId = formData.get('userid');
+        const loginToken = formData.get('loginToken');
+        login({ userId, loginToken });
+      }
+
+      function onRegisterClicked() {
+        const form = document.getElementById('form');
+        const formData = new FormData(form);
+        const userId = formData.get('userid');
+        const name = formData.get('name');
+        register({ userId, name });
+      }
+
+      async function login({ userId, loginToken }) {
+        const url = new URL(API_URL);
+        url.searchParams.append('action', 'login');
+        url.searchParams.append('userId', userId);
+        url.searchParams.append('loginToken', loginToken);
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data.success) {
+          alert(`登入成功: ${data.data.name}`);
+        } else {
+          alert(`登入失敗: ${data.message}`);
+        }
+      }
+
+      async function register({ userId, name }) {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'register', userId, name }),
+        });
+        const data = await response.json();
+        if (data.success) {
+          alert(`註冊成功: ${data.data.loginToken}`);
+        } else {
+          alert(`註冊失敗: ${data.message}`);
+        }
+      }
+
+    </script>
+    <form id="form">
+      <div class="tab-bar">
+        <label :class="['tab', { active: !isRegisterView }]" @click="isRegisterView = false">登入</label>
+        <label :class="['tab', { active: isRegisterView }]" @click="isRegisterView = true">註冊</label>
+      </div>
+      <label for="userid" class="input-entry">
+        <span>帳號: </span>
+        <input class="input" type="text" name="userid" v-model="userId" />
+      </label>
+      <label v-if="!isRegisterView" for="loginToken" class="input-entry">
+        <span>密碼: </span>
+        <input class="input" type="password" name="loginToken" v-model="loginToken" />
+      </label>
+      <label v-if="isRegisterView" for="name" class="input-entry">
+        <span>姓名: </span>
+        <input class="input" type="text" name="name" v-model="name" />
+      </label>
+      <div class="button-bar">
+        <button type="button" onclick="onLoginClicked()">登入</button>
+        <button type="button" onclick="onRegisterClicked()">註冊</button>
+      </div>
+    </form>
+  </body>
+</html>
