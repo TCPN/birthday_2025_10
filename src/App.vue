@@ -118,13 +118,13 @@ onMounted(async () => {
         >
           點數轉移
         </button>
-        <button
+        <!-- <button
           type="button"
           class="button button--fill"
           @click="useToast().toast(`這是一個測試 Toast 訊息 ${randomString(randomChoice([3, 10, 20, 50, 100]) ?? 3)}`)"
         >
           測試 Toast
-        </button>
+        </button> -->
       </div>
       <!-- <nav> -->
         <!-- <RouterLink to="/">Home</RouterLink>
