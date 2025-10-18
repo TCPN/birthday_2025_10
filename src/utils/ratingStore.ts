@@ -2,15 +2,16 @@
 
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { getStuffs, rateStuffs, type RatingAnswer } from "./api";
+import { useApi, type RatingAnswer } from "./useApi";
 import { randomChoice, randomIndexWithProbTable } from "./random";
 
 type RatingStats = Record<string, { sum: number; count: number }>;
 
-export const useUserStore = defineStore('rating', () => {
+export const useRatingStore = defineStore('rating', () => {
   //   const ratingRecords = ref<RatingAnswer[]>([]);
   const ratingStats = ref<RatingStats>({});
-  const stuffs = ref<string[]>();
+  const stuffs = ref<string[]>([]);
+  const ready = ref(false);
   const bufferedAnswers = ref<RatingAnswer[]>([]);
   const SAVED_KEY = 'rating';
 
@@ -36,20 +37,22 @@ export const useUserStore = defineStore('rating', () => {
   };
 
   const fetchStuffs = async () => {
-    const items = await getStuffs();
-    stuffs.value = items.map(item => item.name);
+    console.log('Fetching stuffs...');
+    const newStuffs = await useApi().getStuffs();
+    console.log('Fetched stuffs:', newStuffs);
+    stuffs.value = newStuffs.map(item => item.name);
   }
 
   const getNextRatingStuff = () => {
     if (!stuffs.value) {
-      return;
+      return '';
     }
     const stuffNames = stuffs.value;
     const unratedStuffs = stuffNames.filter(stuff => {
       return !ratingStats.value[stuff];
     });
     if (unratedStuffs && unratedStuffs.length > 0) {
-      return randomChoice(unratedStuffs);
+      return randomChoice(unratedStuffs) || '';
     }
     const averages = stuffNames.map(stuff => {
       const stats = ratingStats.value[stuff];
@@ -60,9 +63,9 @@ export const useUserStore = defineStore('rating', () => {
     });
     const index = randomIndexWithProbTable(averages);
     if (index === -1) {
-      return;
+      return '';
     }
-    return stuffNames[index];
+    return stuffNames[index] ?? '';
   };
 
   const rateStuff = (name: string, rating: number) => {
@@ -75,22 +78,36 @@ export const useUserStore = defineStore('rating', () => {
     saveRatingStats();
   };
 
-  const flushBufferedAnswers = (userId: string) => {
+  const flushBufferedAnswers = async (userId: string) => {
+    ready.value = false;
     const answers = bufferedAnswers.value.slice();
+    bufferedAnswers.value = [];
     try {
-      rateStuffs({ userId, ratings: answers });
-      bufferedAnswers.value = [];
-      return true;
+      const result = await useApi().rateStuffs({ userId, ratings: answers });
+      return result;
     } catch (error) {
-      console.error("Failed to send ratings:", error);
-      return false;
+      console.error('Failed to flush ratings:', error);
+      bufferedAnswers.value.unshift(...answers);
+      throw error;
+    } finally {
+      setTimeout(() => {
+        ready.value = true;
+      }, 10000);
     }
   };
+
+  console.log('Initializing rating store...');
+  fetchStuffs().then(() => {
+    console.log('Rating store initialized.');
+    ready.value = true;
+  });
 
   return {
     ratingStats,
     stuffs,
     bufferedAnswers,
+    ready,
+    //
     loadRatingStats,
     saveRatingStats,
     clearSavedRatingStats,

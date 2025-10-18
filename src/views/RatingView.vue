@@ -1,113 +1,121 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { useUserStore } from "@/utils/userStore";
+import { useRatingStore } from "@/utils/ratingStore";
+import RatingButtons from "@/components/RatingButtons.vue";
+import { useToast } from "@/utils/useToast";
 
-const isRegisterView = ref(true);
-const userId = ref('');
-const loginToken = ref('');
-const name = ref('');
-const duringQuery = ref(false);
+const emit = defineEmits<{
+  (e: 'close'): void;
+}>();
+
+const currentStuff = ref('');
+const rating = ref(0);
+const isButtonLocked = ref(false);
 
 const userStore = useUserStore();
+const ratingStore = useRatingStore();
 
-function lockButtons(fn: () => void) {
-  return async () => {
-    if (duringQuery.value) return;
-    duringQuery.value = true;
-    try {
-      await fn();
-    } catch (e) {
-      console.error(e);
-    } finally {
-      duringQuery.value = false;
-    }
-  };
+function onSendClick() {
+  isButtonLocked.value = true;
+  try {
+    ratingStore.rateStuff(currentStuff.value, rating.value);
+    currentStuff.value = ratingStore.getNextRatingStuff();
+    rating.value = 0;
+  } finally {
+    isButtonLocked.value = false;
+  }
 }
 
-const onClickLogin = lockButtons(() => userStore.login({ userId: userId.value, loginToken: loginToken.value }));
-const onClickRegister = lockButtons(() => userStore.register({ userId: userId.value, name: name.value }));
+function onCloseClick() {
+  emit('close');
+  const userId = userStore.user?.userId;
+  if (userId) {
+    if (ratingStore.bufferedAnswers.length <= 0) {
+      return;
+    }
+    const count = ratingStore.bufferedAnswers.length;
+    useToast().toast(`正在送出 ${count} 項評分...`);
+    ratingStore.flushBufferedAnswers(userId).then((result) => {
+      if (result.points !== -1 && userStore.user) {
+        userStore.user.points = result.points;
+        useToast().toast(`已獲得 ${count} 點`);
+      }
+    }).catch((error) => {
+      useToast().toast(`評分送出失敗: ${error.message}`);
+    });
+  }
+}
+
+onMounted(async () => {
+  currentStuff.value = ratingStore.getNextRatingStuff();
+});
 </script>
 
 <template>
-  <form>
-    <div class="tab-bar">
-      <label :class="['tab', { active: isRegisterView }]" @click="isRegisterView = true">註冊</label>
-      <label :class="['tab', { active: !isRegisterView }]" @click="isRegisterView = false">登入</label>
+  <form class="rating-view">
+    <div class="header">
     </div>
-    <label for="userid" class="input-entry">
-      <span>帳號: </span>
-      <input class="input" type="text" id="userid" v-model="userId" />
-    </label>
-    <label v-if="!isRegisterView" for="loginToken" class="input-entry">
-      <span>密碼: </span>
-      <input class="input" type="password" id="loginToken" v-model="loginToken" />
-    </label>
-    <label v-if="isRegisterView" for="name" class="input-entry">
-      <span>姓名: </span>
-      <input class="input" type="text" id="name" v-model="name" />
-    </label>
+    <div class="rating-text">
+      <div v-if="!currentStuff">
+        目前沒有可評分項目
+      </div>
+      <template v-else>
+        <span>你是否喜歡這項天賦...</span>
+        <div class="stuff-name">
+          {{ currentStuff }}
+        </div>
+      </template>
+    </div>
+    <RatingButtons :disabled="!currentStuff" v-model="rating" />
     <div class="button-bar">
-      <button v-if="!isRegisterView" type="button" :disabled="duringQuery" @click="onClickLogin">登入</button>
-      <button v-if="isRegisterView" type="button" :disabled="duringQuery" @click="onClickRegister">註冊</button>
+      <button
+        type="button"
+        class="button button--fill"
+        :disabled="!currentStuff || rating <= 0 || isButtonLocked"
+        @click="onSendClick"
+      >
+        確定
+      </button>
+    </div>
+    <div class="control-panel">
+      <button
+        type="button"
+        class="button button--border"
+        @click="onCloseClick"
+      >
+        {{ ratingStore.bufferedAnswers.length > 0 ? '完成並獲得點數' : '關閉' }}
+      </button>
     </div>
   </form>
 </template>
 
 <style scoped lang="scss">
-.tab-bar {
-  margin-bottom: 16px;
-  display: flex;
-  justify-content: center;
-  gap: 16px;
+.rating-view {
+  display: grid;
+  grid-template-rows: auto 1fr auto auto auto;
+  place-items: center;
 }
-.tab {
-  padding: 12px 16px;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-
-  &:hover {
-    background-color: #7773;
-    border-bottom: 2px solid #777;
-  }
-
-  &.active {
-    border-bottom: 2px solid skyblue;
-  }
+.rating-text {
+  text-align: center;
+  font-weight: bold;
+  margin-top: 3rem;
 }
-.input-entry {
-  display: block;
-  margin: 8px 0;
-}
-.input {
-  color: white;
-  background-color: transparent;
-  border: 1px solid #555;
-  border-radius: 4px;
-  padding: 4px 8px;
+.stuff-name {
+  margin: 0.5rem 0;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #48ce54; /* 藍色 */
 }
 .button-bar {
-  margin-top: 16px;
-  margin-left: 16px;
-  text-align: center;
-
-  button {
-    color: inherit;
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    background-color: #333;
-    cursor: pointer;
-
-    &:hover {
-      background-color: #555;
-    }
-
-    &:disabled {
-      opacity: 0.6;
-      background-color: #5557;
-      cursor: default;
-      // color: #7774;
-    }
-  }
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+.control-panel {
+  margin-top: 2rem;
+  display: grid;
+  justify-items: center;
 }
 </style>

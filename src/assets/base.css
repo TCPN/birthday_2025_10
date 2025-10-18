@@ -84,3 +84,84 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+.button {
+  color: var(--color-text);
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+  user-select: none;
+
+  &:hover:not(:disabled) {
+    background-color: var(--color-background-soft);
+    border-color: var(--color-border-hover);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.button--border {
+
+}
+
+.button--fill {
+  --color-button-fill-bg: #333;
+  --color-button-fill-bg-hover: #444;
+  --color-button-fill-text: #ddd;
+  color: var(--color-button-fill-text);
+  background-color: var(--color-button-fill-bg);
+  border: none;
+
+  &:hover:not(:disabled) {
+    background-color: var(--color-button-fill-bg-hover);
+  }
+}
+
+.button--small {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.button--no-shape {
+  border: none;
+  background: none;
+}
+
+.button--round {
+  border-radius: 50%;
+  height: 1em;
+  width: 1em;
+  display: inline-grid;
+  place-content: center;
+  padding: 0;
+}
+
+.button-bar {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.input-entry {
+  display: grid;
+  grid-template-rows: auto auto;
+  margin: 8px 0;
+}
+.input-label {
+  font-weight: normal;
+  font-size: 12px;
+}
+.input {
+  color: white;
+  background-color: transparent;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin-top: 2px;
+}
