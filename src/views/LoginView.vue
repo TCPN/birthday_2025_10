@@ -36,6 +36,14 @@ function lockButtons(fn: () => void) {
 }
 
 const onClickLogin = lockButtons(async () => {
+  if (!userId.value) {
+    useToast().toast('請填寫帳號');
+    return;
+  }
+  if (!loginToken.value) {
+    useToast().toast('請填寫密碼');
+    return;
+  }
   try {
     await userStore.login({ userId: userId.value, loginToken: loginToken.value });
   } catch (e) {
@@ -44,13 +52,21 @@ const onClickLogin = lockButtons(async () => {
   }
 });
 const onClickRegister = lockButtons(async () => {
+  if (!userId.value) {
+    useToast().toast('請填寫帳號');
+    return;
+  }
+  if (!name.value) {
+    useToast().toast('請填寫姓名');
+    return;
+  }
   if (!userId.value.match(/^[a-zA-Z0-9_]{3,20}$/)) {
     useToast().toast('帳號格式錯誤，請使用 3-20 字元的英數字或底線');
-    return Promise.resolve();
+    return;
   }
   if (name.value.length > 100) {
     useToast().toast('姓名過長，請限制在 100 字以內');
-    return Promise.resolve();
+    return;
   }
   
   try {
@@ -73,7 +89,7 @@ const onClickHint = lockButtons(() => {
     </div>
     <label for="userid" class="input-entry">
       <span class="input-label">帳號 <button type="button" class="button button--round button--fill " @click="onClickHint">？</button></span>
-      <input class="input" type="text" id="userid" v-model="userId" />
+      <input class="input" type="text" inputmode="email" id="userid" v-model="userId" autocorrect="off"/>
     </label>
     <label v-if="!isRegisterView" for="loginToken" class="input-entry">
       <span class="input-label">密碼</span>
@@ -132,25 +148,5 @@ const onClickHint = lockButtons(() => {
   margin-top: 16px;
   margin-left: 16px;
   text-align: center;
-
-  button {
-    color: inherit;
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    background-color: #333;
-    cursor: pointer;
-
-    &:hover {
-      background-color: #555;
-    }
-
-    &:disabled {
-      opacity: 0.6;
-      background-color: #5557;
-      cursor: default;
-      // color: #7774;
-    }
-  }
 }
 </style>

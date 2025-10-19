@@ -51,7 +51,7 @@ export class APIError extends Error { }
 export type ErrorHandler = (error: Error) => void;
 
 export function createUseApi(errorHandler?: ErrorHandler) {
-  const API_URL = 'https://script.google.com/macros/s/AKfycbwuAf5zjdpWCnTcdxHsWPRwghTxsVaCw5NDBJDQSaA5vtAjCSozp15Z2iFGRAP2W0D2kw/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbwh42jNeXaeg4JyBmCc1TCjl36-RTkNHLkFrsrCFbDzxZh2SIaQ34wBLX4k3m0iYZ5vAw/exec';
 
   function setErrorHandler(handler: ErrorHandler) {
     errorHandler = handler;

@@ -105,7 +105,7 @@ onMounted(async () => {
   margin: 0.5rem 0;
   font-size: 1.5rem;
   font-weight: bold;
-  color: #48ce54; /* 藍色 */
+  color: var(--color-text--highlight);
 }
 .button-bar {
   margin-top: 1rem;

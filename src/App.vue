@@ -95,7 +95,7 @@ onMounted(async () => {
       <div class="info-text">
         你有 {{ userStore.user?.points ?? 0 }} 點
         <button
-          class="button button--small"
+          class="button button--small app-root__refresh-button"
           :disabled="!canRefresh"
           @click="onClickRefresh"
         >
@@ -157,6 +157,10 @@ onMounted(async () => {
   place-items: center;
 }
 
+.app-root__refresh-button {
+  margin-left: 1rem;
+}
+
 .logo {
   display: block;
   margin: 0 auto 2rem;
@@ -180,7 +184,7 @@ onMounted(async () => {
 }
 
 .greeting-text {
-  color: goldenrod;
+  color: var(--color-text--highlight);
 }
 
 .button-bar {
